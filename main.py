@@ -11,7 +11,7 @@ dotenv.load_dotenv()
 EMAIL_ODOO = os.getenv('EMAIL_ODOO')
 API_KEY_ODOO = os.getenv('API_KEY_ODOO')
 
-
+st.set_page_config(layout="wide")
 st.title('Analítico da Meta Faturável 📊')
 st.caption(f'## Veja como você vai se sair esse em **{datetime.datetime.now().strftime("%m/%Y")}**')
 uid_odoo = None
@@ -26,8 +26,8 @@ usuario_rpc = col1.text_input('Seu nome completo', type="default")
 if not usuario_rpc:
     col1.warning('Você não colocou seu nome...')
 meta = col2.radio('Qual a sua meta?', ('80', '100', '120'), index=2)
-initial_date = col1.date_input('Data inicial', value=data_inicial)
-end_date = col1.date_input('Data final', value=data_final)
+initial_date = col1.date_input('Data inicial', value=data_inicial, format='DD/MM/YYYY')
+end_date = col1.date_input('Data final', value=data_final, format='DD/MM/YYYY')
 
 executar = st.button('Veja a sua meta!')
 
@@ -95,7 +95,7 @@ if executar and usuario_rpc:
         df_base['cliente'].append(cliente)
         df_base['x_honorarios'].append(x_honorarios)
     df = pd.DataFrame.from_dict(df_base)
-    df = atualizar_e_salvar_excel(df, initial_date, end_date, nome_arquivo='minhas_horas_totais.xlsx')
+    df = atualizar_e_salvar_excel_robusto(df, initial_date, end_date, nome_arquivo='minhas_horas_totais.xlsx')
 
 
     total_de_horas = soma_todas_as_horas(df)
@@ -107,22 +107,24 @@ if executar and usuario_rpc:
     col1.markdown(resultado)
     
     col2.markdown('----')
-    col2.write(f"Mês da análise selecionada: {date_analisys_meta}")
+    col2.markdown('### Dados Estratégicos')
+    col2.markdown(f"##### Mês da análise selecionada: **{date_analisys_meta}**")
     # col2.markdown('----')
-    col2.write(f"Dias úteis necessários para bater a meta 🗓️: {dias_uteis}")
+    col2.markdown(f"##### Dias úteis necessários para bater a meta 🗓️: **{dias_uteis}**")
     # col2.markdown('----')
-    col2.write(f"Distribuição de horas por dia útil para bater a meta: {distribuicao_horas_formatada}")
+    col2.markdown(f"##### Distribuição de horas por dia útil para bater a meta: **{distribuicao_horas_formatada}**")
     # col2.markdown('----')
-    col2.write(f"Total de horas faturaveis até agora 🕑: {total_de_horas}")
+    col2.markdown(f"##### Total de horas faturaveis até agora 🕑: **{total_de_horas}**")
     # col2.markdown('----')
-    col2.write(f"Horas extras (comissão) feita 💰: {calcular_diferenca_horas(int(meta), total_de_horas)}")
+    col2.markdown(f"##### Horas extras (comissão) feita 💰: **{calcular_diferenca_horas(int(meta), total_de_horas)}**")
     col2.markdown('----')
 
     st.success('Alguns analíticos...')
     criar_grafico_pizza_task(df, 'task')
     criar_grafico_pizza(df, 'cliente')
-    
-    honorarios = calcular_honorarios_total(df, initial_date, end_date)
-    st.write(f"Quanto você colocou na empresa 💰: {honorarios}")
+    # st.plotly_chart(analisar_horas_extras(df))
+    with st.expander('$?'):
+        honorarios = calcular_honorarios_total(df, initial_date, end_date)
+        st.write(f"Quanto você colocou na empresa 💰: {honorarios}")
 
     # st.dataframe(df)

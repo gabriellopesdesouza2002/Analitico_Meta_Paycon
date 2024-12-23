@@ -93,15 +93,18 @@ def calcular_honorarios_total(df, initial_date, end_date):
     :param end_date: Data final do filtro no formato datetime.date.
     :return: String com o valor total formatado em reais brasileiros.
     """
-    # Garantir que initial_date e end_date sejam timezone-aware, alinhados com o DataFrame
-    gmt_minus_3 = pd.Timestamp(initial_date).tz_localize("America/Sao_Paulo")
-    gmt_minus_3_end = pd.Timestamp(end_date).tz_localize("America/Sao_Paulo")
+    # Garantir que initial_date e end_date sejam timezone-naive, alinhados com o DataFrame
+    initial_date_naive = pd.Timestamp(initial_date).replace(tzinfo=None)
+    end_date_naive = pd.Timestamp(end_date).replace(tzinfo=None)
 
-    # Filtrar pelo intervalo de datas (assumindo que as colunas já têm GMT-3 ou estão consistentes)
+    # Filtrar pelo intervalo de datas
     df_filtrado = df[
-        (df['x_start_datetime'] >= gmt_minus_3) &
-        (df['x_start_datetime'] <= gmt_minus_3_end)
+        (df['x_start_datetime'] >= initial_date_naive) &
+        (df['x_start_datetime'] <= end_date_naive)
     ]
+
+    # Garantir que a coluna x_honorarios seja numérica
+    df_filtrado['x_honorarios'] = pd.to_numeric(df_filtrado['x_honorarios'], errors='coerce')
 
     # Calcular o total do campo x_honorarios
     total_honorarios = df_filtrado['x_honorarios'].sum()
@@ -238,15 +241,13 @@ def atualizar_e_salvar_excel(df, initial_date, end_date, nome_arquivo='dados_atu
     """
     Atualiza um arquivo Excel com novos dados, aplica GMT-3 às colunas de data,
     remove o fuso horário antes de salvar e retorna os dados no intervalo fornecido.
-    
+
     :param df: DataFrame com os dados a serem salvos.
     :param initial_date: Data inicial do filtro no formato datetime.date.
     :param end_date: Data final do filtro no formato datetime.date.
     :param nome_arquivo: Nome do arquivo Excel para salvar (padrão: 'dados_atualizados.xlsx').
     :return: DataFrame filtrado pelo intervalo de datas.
     """
-    import pytz
-
     # Definir o fuso horário GMT-3
     gmt_minus_3 = pytz.timezone('America/Sao_Paulo')
 
@@ -254,19 +255,23 @@ def atualizar_e_salvar_excel(df, initial_date, end_date, nome_arquivo='dados_atu
     initial_date_formatted = pd.Timestamp(initial_date).replace(tzinfo=gmt_minus_3)
     end_date_formatted = pd.Timestamp(end_date).replace(tzinfo=gmt_minus_3)
 
+    # Criar ou carregar o arquivo Excel existente
     if os.path.exists(nome_arquivo):
         df_existente = pd.read_excel(nome_arquivo)
-        ids_existentes = set(df_existente['id'])
-        novos_registros = df[~df['id'].isin(ids_existentes)]
-        
-        if not novos_registros.empty:
-            # Concatenar os novos registros com os existentes
-            df_final = pd.concat([df_existente, novos_registros], ignore_index=True)
-        else:
-            # Se não houver novos registros, manter o DataFrame existente
-            df_final = df_existente
     else:
-        # Se o arquivo não existe, criar um novo com os dados fornecidos
+        df_existente = pd.DataFrame()
+
+    # Garantir que o arquivo existente e o novo DataFrame tenham os mesmos tipos de dados
+    if not df_existente.empty:
+        df_existente['id'] = df_existente['id'].astype(str)
+
+    df['id'] = df['id'].astype(str)
+
+    # Verificar duplicatas com base na coluna "id"
+    if not df_existente.empty:
+        novos_registros = df[~df['id'].isin(df_existente['id'])]
+        df_final = pd.concat([df_existente, novos_registros], ignore_index=True)
+    else:
         df_final = df
 
     # Converter as colunas de datas para timezone-aware (GMT-3)
@@ -287,4 +292,60 @@ def atualizar_e_salvar_excel(df, initial_date, end_date, nome_arquivo='dados_atu
     df_final.to_excel(nome_arquivo, index=False)
 
     # Retornar o DataFrame filtrado
+    return df_filtrado
+
+
+def atualizar_e_salvar_excel_robusto(df, initial_date, end_date, nome_arquivo='dados_atualizados.xlsx'):
+    """
+    Atualiza um arquivo Excel com novos dados, aplica GMT-3 às colunas de data,
+    remove o fuso horário antes de salvar e retorna os dados no intervalo fornecido.
+    
+    :param df: DataFrame com os dados a serem salvos.
+    :param initial_date: Data inicial do filtro no formato datetime.date.
+    :param end_date: Data final do filtro no formato datetime.date.
+    :param nome_arquivo: Nome do arquivo Excel para salvar (padrão: 'dados_atualizados.xlsx').
+    :return: DataFrame atualizado e filtrado pelo intervalo fornecido.
+    """
+    # Definir o fuso horário GMT-3
+    gmt_minus_3 = pytz.timezone('America/Sao_Paulo')
+
+    # Converter initial_date e end_date para timezone-naive
+    initial_date_formatted = pd.Timestamp(initial_date).replace(tzinfo=None)
+    end_date_formatted = pd.Timestamp(end_date).replace(tzinfo=None)
+
+    # Carregar o arquivo existente ou criar um novo
+    if os.path.exists(nome_arquivo):
+        df_existente = pd.read_excel(nome_arquivo)
+
+        # Garantir que a coluna 'id' seja string para evitar problemas na comparação
+        df_existente['id'] = df_existente['id'].astype(str)
+    else:
+        df_existente = pd.DataFrame()
+
+    # Converter a coluna 'id' do novo DataFrame para string
+    df['id'] = df['id'].astype(str)
+
+    # Remover duplicatas com base na coluna 'id'
+    if not df_existente.empty:
+        df_atualizado = pd.concat([df_existente, df], ignore_index=True).drop_duplicates(subset=['id'], keep='last')
+    else:
+        df_atualizado = df
+
+    # Converter as colunas de datas para timezone-naive para garantir consistência
+    df_atualizado['x_start_datetime'] = pd.to_datetime(df_atualizado['x_start_datetime'], errors='coerce').dt.tz_localize(None)
+    df_atualizado['x_end_datetime'] = pd.to_datetime(df_atualizado['x_end_datetime'], errors='coerce').dt.tz_localize(None)
+
+    # Verificar se há valores nulos após as conversões
+    if df_atualizado['x_start_datetime'].isna().any() or df_atualizado['x_end_datetime'].isna().any():
+        raise ValueError("Há valores nulos em 'x_start_datetime' ou 'x_end_datetime'. Verifique os dados.")
+
+    # Salvar todos os dados no Excel (sem filtro)
+    df_atualizado.to_excel(nome_arquivo, index=False)
+
+    # Filtrar os dados pelo intervalo de datas para retorno
+    df_filtrado = df_atualizado[
+        (df_atualizado['x_start_datetime'] >= initial_date_formatted) &
+        (df_atualizado['x_start_datetime'] <= end_date_formatted)
+    ]
+
     return df_filtrado
