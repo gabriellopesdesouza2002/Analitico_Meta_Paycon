@@ -93,6 +93,8 @@ def calcular_honorarios_total(df, initial_date, end_date):
     :param end_date: Data final do filtro no formato datetime.date.
     :return: String com o valor total formatado em reais brasileiros.
     """
+    if df.empty:
+        return "R$ 0,00"
     # Garantir que initial_date e end_date sejam timezone-naive, alinhados com o DataFrame
     initial_date_naive = pd.Timestamp(initial_date).replace(tzinfo=None)
     end_date_naive = pd.Timestamp(end_date).replace(tzinfo=None)
@@ -220,6 +222,8 @@ def tarefa_mais_trabalhada(df):
     - String formatada com a tarefa, tempo total e descrição.
     """
     # Encontrar o índice do maior valor na coluna 'unit_amount'
+    if df.empty:
+        return "Não há nenhuma tarefa registrada ainda no periodo selecionado."
     max_index = df['unit_amount'].idxmax()
 
     # Obter os valores correspondentes

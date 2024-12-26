@@ -29,7 +29,12 @@ meta = col2.radio('Qual a sua meta?', ('80', '100', '120'), index=2)
 initial_date = col1.date_input('Data inicial', value=data_inicial, format='DD/MM/YYYY')
 end_date = col1.date_input('Data final', value=data_final, format='DD/MM/YYYY')
 
-executar = st.button('Veja a sua meta!')
+executar = col1.button('Veja a sua meta!')
+apagar_minhas_horas = col2.button('Apagar planilha de histórico!', type="primary")
+if apagar_minhas_horas:
+    try:
+        os.remove('minhas_horas_totais.xlsx')
+    except:pass
 
 
 if executar and usuario_rpc:
@@ -95,7 +100,10 @@ if executar and usuario_rpc:
         df_base['cliente'].append(cliente)
         df_base['x_honorarios'].append(x_honorarios)
     df = pd.DataFrame.from_dict(df_base)
-    df = atualizar_e_salvar_excel_robusto(df, initial_date, end_date, nome_arquivo='minhas_horas_totais.xlsx')
+    if df.empty:
+        print('O df está vazio')
+    else:
+        df = atualizar_e_salvar_excel_robusto(df, initial_date, end_date, nome_arquivo='minhas_horas_totais.xlsx')
 
 
     total_de_horas = soma_todas_as_horas(df)
