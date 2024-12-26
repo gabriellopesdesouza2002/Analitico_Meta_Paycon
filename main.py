@@ -28,7 +28,7 @@ if not usuario_rpc:
 meta = col2.radio('Qual a sua meta?', ('80', '100', '120'), index=2)
 initial_date = col1.date_input('Data inicial', value=data_inicial, format='DD/MM/YYYY')
 end_date = col1.date_input('Data final', value=data_final, format='DD/MM/YYYY')
-
+salario_bruto = col2.number_input('Seu salário bruto', value=0.0, min_value=0.0, step=0.01, format="%.2f")
 executar = col1.button('Veja a sua meta!')
 apagar_minhas_horas = col2.button('Apagar planilha de histórico!', type="primary")
 if apagar_minhas_horas:
@@ -114,17 +114,13 @@ if executar and usuario_rpc:
     resultado = tarefa_mais_trabalhada(df)
     col1.markdown(resultado)
     
-    col2.markdown('----')
     col2.markdown('### Dados Estratégicos')
     col2.markdown(f"##### Mês da análise selecionada: **{date_analisys_meta}**")
-    # col2.markdown('----')
     col2.markdown(f"##### Dias úteis necessários para bater a meta 🗓️: **{dias_uteis}**")
-    # col2.markdown('----')
     col2.markdown(f"##### Distribuição de horas por dia útil para bater a meta: **{distribuicao_horas_formatada}**")
-    # col2.markdown('----')
     col2.markdown(f"##### Total de horas faturaveis até agora 🕑: **{total_de_horas}**")
-    # col2.markdown('----')
     col2.markdown(f"##### Horas extras (comissão) feita 💰: **{calcular_diferenca_horas(int(meta), total_de_horas)}**")
+    col2.markdown(f"##### Salário com comissão líquido com descontos de 15,52% (INSS e IR) 🤑: **{calcular_salario(calcular_diferenca_horas(int(meta), total_de_horas), salario_bruto)}**")
     col2.markdown('----')
 
     st.success('Alguns analíticos...')
