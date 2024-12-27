@@ -120,8 +120,8 @@ if executar and usuario_rpc:
     df = pd.DataFrame.from_dict(df_base)
     if df.empty:
         print('O df está vazio')
-    else:
-        df = atualizar_e_salvar_excel_robusto(df, initial_date, end_date, nome_arquivo='minhas_horas_totais.xlsx')
+    # else:
+    #     df = atualizar_e_salvar_excel_robusto(df, initial_date, end_date, nome_arquivo='minhas_horas_totais.xlsx')
 
 
     total_de_horas = soma_todas_as_horas(df)
