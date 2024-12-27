@@ -3,6 +3,175 @@ import streamlit as st
 import pandas as pd
 import calendar
 import plotly.graph_objects as go
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+def grafico_tempo_gasto_por_dia(df, coluna_data="x_start_datetime", coluna_tempo="unit_amount"):
+    """
+    Gera um gráfico de linha mostrando o tempo total gasto por dia com base na coluna `unit_amount`.
+
+    Args:
+        df (pd.DataFrame): O DataFrame contendo os dados.
+        coluna_data (str): Nome da coluna com as datas.
+        coluna_tempo (str): Nome da coluna com o tempo da tarefa (unit_amount).
+
+    Returns:
+        None: Exibe o gráfico diretamente no Streamlit.
+    """
+    # Converter a coluna de datas para datetime
+    df[coluna_data] = pd.to_datetime(df[coluna_data])
+
+    # Criar uma coluna com apenas as datas (sem o horário)
+    df["dia"] = df[coluna_data].dt.date
+
+    # Agrupar por dia e somar o tempo das tarefas
+    df_resumo = df.groupby("dia")[coluna_tempo].sum().reset_index()
+
+    # Criar o gráfico de linha
+    fig = px.line(
+        df_resumo, 
+        x="dia", 
+        y=coluna_tempo, 
+        title="Tempo Gasto por Dia (Tempo que executou as tarefas por dia)",
+        labels={"dia": "Dia", coluna_tempo: "Tempo Gasto (Horas)"}
+    )
+    fig.update_traces(mode="lines+markers")
+
+    # Exibir o gráfico no Streamlit
+    return fig
+    
+
+def grafico_tempo_gasto_por_dia_hora_extra(df, coluna_data="x_start_datetime", coluna_tempo="unit_amount"):
+    """
+    Gera um gráfico de linha mostrando o tempo total gasto por dia com base na coluna `unit_amount`.
+
+    Args:
+        df (pd.DataFrame): O DataFrame contendo os dados.
+        coluna_data (str): Nome da coluna com as datas.
+        coluna_tempo (str): Nome da coluna com o tempo da tarefa (unit_amount).
+
+    Returns:
+        None: Exibe o gráfico diretamente no Streamlit.
+    """
+    # Converter a coluna de datas para datetime
+    df[coluna_data] = pd.to_datetime(df[coluna_data])
+
+    # Criar uma coluna com apenas as datas (sem o horário)
+    df["dia"] = df[coluna_data].dt.date
+
+    # Agrupar por dia e somar o tempo das tarefas
+    df_resumo = df.groupby("dia")[coluna_tempo].sum().reset_index()
+
+    # Criar o gráfico de linha
+    fig = px.line(
+        df_resumo, 
+        x="dia", 
+        y=coluna_tempo, 
+        title="Tempo Gasto por Dia (Tempo que trabalhou até mais tarde [H/Extra])",
+        labels={"dia": "Dia", coluna_tempo: "Tempo Gasto (Horas)"}
+    )
+    fig.update_traces(mode="lines+markers")
+
+    # Exibir o gráfico no Streamlit
+    return fig
+
+def grafico_horas_extras(df, coluna_inicio="x_start_datetime", coluna_fim="x_end_datetime"):
+    """
+    Gera um gráfico de linha com os dias e as horas extras calculadas.
+
+    Args:
+        df (pd.DataFrame): O DataFrame contendo os dados.
+        coluna_inicio (str): Nome da coluna com os horários de início.
+        coluna_fim (str): Nome da coluna com os horários de término.
+
+    Returns:
+        None: Exibe o gráfico diretamente no Streamlit.
+    """
+    # Converter as colunas para datetime
+    df[coluna_inicio] = pd.to_datetime(df[coluna_inicio])
+    df[coluna_fim] = pd.to_datetime(df[coluna_fim])
+
+    # Criar uma coluna com a data (sem o horário)
+    df["dia"] = df[coluna_inicio].dt.date
+
+    # Definir os horários de início e fim do expediente
+    hora_inicio_comercial = pd.Timestamp("09:00:00").time()
+    hora_fim_comercial = pd.Timestamp("18:00:00").time()
+
+    # Função para calcular as horas extras
+    def calcular_horas_extras(row):
+        inicio = row[coluna_inicio]
+        fim = row[coluna_fim]
+
+        # Verificar horas antes do início do expediente
+        horas_extras_antes = 0
+        if inicio.time() < hora_inicio_comercial:
+            horas_extras_antes = (pd.Timestamp.combine(inicio.date(), hora_inicio_comercial) - inicio).total_seconds() / 3600
+
+        # Verificar horas após o fim do expediente
+        horas_extras_depois = 0
+        if fim.time() > hora_fim_comercial:
+            horas_extras_depois = (fim - pd.Timestamp.combine(fim.date(), hora_fim_comercial)).total_seconds() / 3600
+
+        return horas_extras_antes + horas_extras_depois
+
+    # Aplicar a função para calcular as horas extras
+    df["horas_extras"] = df.apply(calcular_horas_extras, axis=1)
+
+    # Agrupar por dia e somar as horas extras
+    df_resumo = df.groupby("dia")["horas_extras"].sum().reset_index()
+
+    # Criar o gráfico de linha
+    fig = px.line(
+        df_resumo, 
+        x="dia", 
+        y="horas_extras", 
+        title="Horas Extras por Dia",
+        labels={"dia": "Dia", "horas_extras": "Horas Extras"}
+    )
+    fig.update_traces(mode="lines+markers")
+
+    # Exibir o gráfico no Streamlit
+    st.plotly_chart(fig)
+
+
+
+
+def gerar_nuvem_de_palavras(texto, max_words=100, background_color="#ffffff", width=800, height=400, scale=2, max_font_size=40):
+    """
+    Gera e exibe uma nuvem de palavras.
+
+    Parâmetros:
+        texto (str): O texto para gerar a nuvem de palavras.
+        max_words (int): O número máximo de palavras na nuvem.
+        background_color (str): Cor de fundo da nuvem (em formato hexadecimal).
+        width (int): Largura da imagem da nuvem de palavras.
+        height (int): Altura da imagem da nuvem de palavras.
+        scale (float): Fator de escala para aumentar a qualidade da imagem.
+        max_font_size (int): Tamanho máximo da fonte para as palavras.
+    """
+    if not texto.strip():
+        st.warning("Por favor, insira algum texto!")
+        return
+
+    # Geração da nuvem de palavras com dimensões ajustadas e qualidade melhorada
+    wordcloud = WordCloud(
+        max_words=max_words,
+        background_color=background_color,
+        width=width,
+        height=height,
+        scale=scale,
+        max_font_size=max_font_size
+    ).generate(texto)
+
+    # Plotando a nuvem de palavras
+    fig, ax = plt.subplots(figsize=(width / 100, height / 100))  # Ajuste do tamanho da figura
+    ax.imshow(wordcloud, interpolation='bilinear')
+    ax.axis("off")
+    st.pyplot(fig, use_container_width=False)
+
 
 
 def criar_grafico_pizza_task(df, campo_task):
@@ -27,7 +196,8 @@ def criar_grafico_pizza_task(df, campo_task):
     )
 
     # Exibir o gráfico no Streamlit
-    st.plotly_chart(fig)
+    return fig
+    
 
 
 def criar_grafico_pizza(df, campo_cliente):
@@ -52,7 +222,8 @@ def criar_grafico_pizza(df, campo_cliente):
     )
 
     # Exibir o gráfico no Streamlit
-    st.plotly_chart(fig)
+    return fig
+    
 
 
 def analisar_horas_extras(df, col_start='x_start_datetime', col_unit='unit_amount'):

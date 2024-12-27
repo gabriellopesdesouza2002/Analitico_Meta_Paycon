@@ -28,6 +28,8 @@ def calcular_salario(horas_extras, salario_bruto):
 # Exemplo de uso:
 horas_extras = "09:50"
 horas_extras = "00:00"
-salario_bruto = 4627.76
+salario_bruto = 4627.76  # senior
+salario_bruto = 3345.15  # pleno
+salario_bruto = 1983.33  # junior
 resultado = calcular_salario(horas_extras, salario_bruto)
 print("Salário líquido:", resultado)

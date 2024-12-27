@@ -16,10 +16,68 @@ import datetime
 import pandas as pd
 import pytz
 import dotenv
+from dateutil import parser  # Usaremos parser para lidar com strings de data/hora
 
 
 
 
+def get_odoo2(model: str, data: dict, auth: dict, filters: list = [], uid: int = None, limit: int = None) -> list[dict]:
+    """
+    Retrieves data from an Odoo model using XML-RPC, applying filters, and adjusts times to America/Sao_Paulo.
+
+    Args:
+        model (str): The name of the Odoo model to retrieve data from.
+        data (dict): A dictionary containing additional arguments to pass to the XML-RPC call.
+        filters (list): A list of tuples representing the filters to apply. Each tuple should contain
+                        the field name, the operator, and the value to filter by.
+
+    Returns:
+        list[dict]: List of dictionaries containing the data from the Odoo model.
+    """
+    URL_RPC = auth['URL_RPC']
+    DB_RPC = auth['DB_RPC']
+    USERNAME_RPC = auth['USERNAME_RPC']
+    PASSWORD_RPC = auth['PASSWORD_RPC']
+    context = ssl._create_unverified_context()
+
+    # Establish the connection to Odoo
+    common = client.ServerProxy(f'{URL_RPC}xmlrpc/2/common', context=context)
+    if uid is None:
+        uid = common.authenticate(DB_RPC, USERNAME_RPC, PASSWORD_RPC, {})
+    models = client.ServerProxy('{}/xmlrpc/2/object'.format(URL_RPC), context=context)
+
+    # Apply filters to the search call
+    domain = filters if filters else []
+    
+    # If a limit is provided, use it in the data argument for search_read
+    if limit is not None:
+        if 'limit' in data:
+            # Respect the lower of the two limits if 'limit' was already in 'data'
+            data['limit'] = min(data['limit'], limit)
+        else:
+            data['limit'] = limit
+
+    # Retrieve data from Odoo
+    values = models.execute_kw(DB_RPC, uid, PASSWORD_RPC, model, 'search_read', [domain], data)
+
+    # Convert datetime fields to America/Sao_Paulo timezone
+    saopaulo_tz = pytz.timezone('America/Sao_Paulo')
+    for record in values:
+        for key, value in record.items():
+            if isinstance(value, str):
+                try:
+                    # Attempt to parse the datetime string using dateutil.parser
+                    dt = parser.parse(value)
+                    if dt.tzinfo is None:
+                        # Assume UTC if no timezone info is present
+                        dt = pytz.utc.localize(dt)
+                    # Convert to Sao Paulo timezone
+                    record[key] = dt.astimezone(saopaulo_tz).strftime('%Y-%m-%d %H:%M:%S')
+                except (ValueError, TypeError):
+                    # Ignore non-datetime strings or parsing errors
+                    pass
+
+    return values
 
 def get_odoo(model: str, data: dict, auth: dict, filters: list = [], uid: int = None, limit: int = None) -> list[dict]:
     """
@@ -238,7 +296,7 @@ def tarefa_mais_trabalhada(df):
     formatted_time = f"{hours:02d}:{minutes:02d}"
 
     # Retornar o texto formatado
-    return f"#### Até agora, a tarefa que você mais ficou com o relógio ligado, trabalhando nela, foi: \n##### *{task} - {cliente}*\n\n#### O tempo que você ficou trabalhando nisso foi\n ###### **{formatted_time} Horas/Minutos**\n\n#### Essa é a descrição da tarefa:\n\n*{name}*"
+    return f"#### Até agora, a tarefa que você mais trabalhou direto foi: \n##### *{task} - {cliente}*\n\n#### O tempo que você ficou trabalhando nisso foi\n ###### **{formatted_time} Horas/Minutos**\n\n#### Essa é a descrição da tarefa:\n\n*{name}*"
 
 
 def atualizar_e_salvar_excel(df, initial_date, end_date, nome_arquivo='dados_atualizados.xlsx'):
@@ -381,3 +439,103 @@ def calcular_salario(horas_extras, salario_bruto):
     salario_liquido = salario_com_extras - desconto
 
     return f"R$ {salario_liquido:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+
+
+def calcular_diferenca(horas_extras, salario_bruto, comissao=0):
+    """
+    Calcula o valor adicional considerando horas extras e comissão.
+
+    Args:
+        horas_extras: String no formato hh:mm representando as horas extras.
+        salario_bruto: Valor do salário bruto.
+        comissao: Valor da comissão adicional (não será somado ao salário, apenas retornado como diferença).
+
+    Returns:
+        O valor adicional formatado.
+    """
+
+    # Converter horas extras para um decimal
+    horas_extras_decimal = float(horas_extras.replace(':', '.')) / 100
+
+    # Calcular o valor das horas extras
+    valor_horas_extras = salario_bruto * horas_extras_decimal
+
+    # Calcular o valor adicional total
+    valor_total_adicional = valor_horas_extras + comissao
+
+    # Retornar o valor adicional formatado
+    return f"R$ {valor_total_adicional:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+
+
+
+def concatenar_colunas_em_string(df):
+    """
+    Concatena todas as colunas de um DataFrame em uma única string, separando os valores por espaço.
+
+    Parâmetros:
+        df (pd.DataFrame): O DataFrame de entrada.
+
+    Retorna:
+        str: Uma única string contendo os valores concatenados das colunas.
+    """
+    # Converte todas as colunas para strings e concatena com espaço
+    resultado = df.astype(str).agg(' '.join, axis=1).str.cat(sep=' ')
+    return resultado
+
+
+def calcular_salario_liquido(salario_bruto):
+    """
+    Calcula o salário líquido aplicando um desconto fixo de 15,52% (INSS e IR),
+    e retorna o valor formatado como R$.
+
+    Args:
+        salario_bruto (float): O valor do salário bruto.
+
+    Returns:
+        str: O salário líquido formatado no padrão brasileiro (R$).
+    """
+    # Aplicar o desconto de 15,52%
+    desconto = salario_bruto * 0.1552
+
+    # Calcular o salário líquido
+    salario_liquido = salario_bruto - desconto
+
+    # Retornar o valor formatado
+    return f"R$ {salario_liquido:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+
+
+
+def filtrar_fora_horario_comercial(df, coluna_inicio='x_start_datetime', coluna_fim='x_end_datetime'):
+    """
+    Filtra as linhas de um DataFrame cujos horários estão fora do horário comercial (9h às 18h).
+
+    Args:
+        df (pd.DataFrame): O DataFrame a ser analisado.
+        coluna_inicio (str): O nome da coluna contendo os horários de início.
+        coluna_fim (str): O nome da coluna contendo os horários de término.
+
+    Returns:
+        pd.DataFrame: Um DataFrame com as linhas fora do horário comercial.
+    """
+    # Converter as colunas para datetime
+    # Converter as colunas para datetime
+    df[coluna_inicio] = pd.to_datetime(df[coluna_inicio])
+    df[coluna_fim] = pd.to_datetime(df[coluna_fim])
+
+    # Adicionar colunas com as horas (apenas o número da hora)
+    df["hora_inicio"] = df[coluna_inicio].dt.hour
+    df["hora_fim"] = df[coluna_fim].dt.hour
+
+    # Definir os limites do horário comercial
+    hora_inicio = 9
+    hora_fim = 18
+
+    # Filtrar as linhas fora do horário comercial
+    fora_horario = df[
+        (df["hora_inicio"] < hora_inicio) | 
+        (df["hora_inicio"] >= hora_fim) |
+        (df["hora_fim"] < hora_inicio) |
+        (df["hora_fim"] >= hora_fim)
+    ]
+
+    return fora_horario
