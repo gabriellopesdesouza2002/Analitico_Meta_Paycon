@@ -33,7 +33,8 @@ data_inicial = primeiro_dia_util_mes(hoje)
 data_final = ultimo_dia_util_mes(hoje)
 
 col1, col2 = st.columns(2)
-
+email_odoo = col1.text_input('Seu email do Odoo', type="default")
+senha_odoo = col2.text_input('Sua senha do Odoo', type="password")
 usuario_rpc = col1.text_input('Seu nome completo', type="default")
 if not usuario_rpc:
     col1.warning('Você não colocou seu nome...')
@@ -57,7 +58,7 @@ if apagar_minhas_horas:
 if executar and usuario_rpc:
     URL_RPC = "https://payconautomacoes.odoo.com/"
     DB_RPC = "payconautomacoes"
-    USERNAME_RPC = EMAIL_ODOO
+    USERNAME_RPC = email_odoo.strip()
     PASSWORD_RPC = API_KEY_ODOO
     AUTH = {
         "URL_RPC": URL_RPC,

@@ -1,5 +1,5 @@
 import os
-packages = 'payconpy streamlit plotly'
+packages = 'payconpy streamlit plotly wordcloud matplotlib'
 
 print('Criando arquivo .env para você colocar o usuário e senha')
 with open('.env', 'w') as f:
