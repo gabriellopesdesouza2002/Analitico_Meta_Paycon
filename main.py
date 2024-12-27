@@ -19,9 +19,9 @@ API_KEY_ODOO = os.getenv('API_KEY_ODOO')
 if EMAIL_ODOO == 'SEU_EMAIL_NO_ODOO' or API_KEY_ODOO == 'SUA_CHAVE_DE_API':
     st.warning('VOCÊ NÃO CONFIGUROU O ARQUIVO .ENV...')
 
-SALARIO_JUNIOR = os.getenv('SALARIO_JUNIOR')
-SALARIO_PLENO = os.getenv('SALARIO_PLENO')
-SALARIO_SENIOR = os.getenv('SALARIO_SENIOR')
+SALARIO_JUNIOR = st.secrets.odoo.salario_junior
+SALARIO_PLENO = st.secrets.odoo.salario_pleno
+SALARIO_SENIOR = st.secrets.odoo.salario_senior
 
 st.set_page_config(layout="wide")
 st.title('Analítico da Meta Faturável 📊')
