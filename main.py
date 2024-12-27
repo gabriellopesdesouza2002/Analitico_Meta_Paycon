@@ -159,8 +159,8 @@ if executar and usuario_rpc:
     gerar_nuvem_de_palavras(texto, background_color='black', width=550, height=550, scale=15, max_font_size=50)
     st.table(df_horas_extras)
     
-    with st.expander('$?'):
-        honorarios = calcular_honorarios_total(df, initial_date, end_date)
-        st.write(f"Quanto você colocou na empresa 💰: {honorarios}")
+    # with st.expander('$?'):
+    #     honorarios = calcular_honorarios_total(df, initial_date, end_date)
+    #     st.write(f"Quanto você colocou na empresa 💰: {honorarios}")
 
     # st.dataframe(df)
