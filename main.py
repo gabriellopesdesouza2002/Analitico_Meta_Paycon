@@ -54,9 +54,6 @@ if apagar_minhas_horas:
         os.remove('minhas_horas_totais.xlsx')
     except:pass
 
-print(st.secrets.odoo.url_rpc)
-print(st.secrets.odoo.db_rpc)
-
 if executar and usuario_rpc:
     URL_RPC = st.secrets.odoo.url_rpc
     DB_RPC = st.secrets.odoo.db_rpc
