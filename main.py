@@ -152,12 +152,11 @@ if executar and usuario_rpc:
     df_horas_extras = filtrar_fora_horario_comercial(df)
     col1.plotly_chart(grafico_tempo_gasto_por_dia(df))
     col2.plotly_chart(grafico_tempo_gasto_por_dia_hora_extra(df_horas_extras))
-
-    
+    st.plotly_chart(grafico_tempo_vs_meta(df, meta=int(meta)))
     texto = concatenar_colunas_em_string(df)
     texto = re.sub(r' irá | foi | nao | um | ele | não | para | 0 | na | se | o | em | ou | que | e | quando | por | para | de | da | ao | pela | x | uma', ' ', texto, flags=re.IGNORECASE)
     gerar_nuvem_de_palavras(texto, background_color='black', width=550, height=550, scale=15, max_font_size=50)
-    st.table(df_horas_extras)
+    # st.table(df_horas_extras)
     
     # with st.expander('$?'):
     #     honorarios = calcular_honorarios_total(df, initial_date, end_date)

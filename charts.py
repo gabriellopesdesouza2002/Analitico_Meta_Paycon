@@ -360,3 +360,46 @@ def analisar_horas_extras_com_df_atualizado(df, col_start='x_start_datetime', co
 
     return fig, df_horas_extras
 
+
+def grafico_tempo_vs_meta(df, coluna_data="x_start_datetime", coluna_tempo="unit_amount", meta=40):
+    """
+    Gera um gráfico de linha mostrando o tempo gasto por dia em comparação com as horas necessárias para atingir a meta.
+
+    Args:
+        df (pd.DataFrame): O DataFrame contendo os dados.
+        coluna_data (str): Nome da coluna com as datas.
+        coluna_tempo (str): Nome da coluna com o tempo da tarefa (unit_amount).
+        meta (int): Meta de horas a serem distribuídas.
+
+    Returns:
+        fig (plotly.graph_objects.Figure): O gráfico comparando horas gastas e meta.
+    """
+    # Converter a coluna de datas para datetime
+    df[coluna_data] = pd.to_datetime(df[coluna_data])
+
+    # Criar uma coluna com apenas as datas (sem o horário)
+    df["dia"] = df[coluna_data].dt.date
+
+    # Agrupar por dia e somar o tempo das tarefas
+    df_resumo = df.groupby("dia")[coluna_tempo].sum().reset_index()
+    df_resumo = df_resumo.sort_values("dia")
+
+    # Calcular a distribuição das horas necessárias
+    dias_uteis = len(df_resumo)
+    horas_por_dia = meta / dias_uteis
+    distribuicao_horas_formatada = [round(horas_por_dia, 2)] * dias_uteis
+
+    # Adicionar a distribuição ao DataFrame
+    df_resumo["horas_meta"] = distribuicao_horas_formatada
+
+    # Criar o gráfico comparativo
+    fig = px.line(
+        df_resumo,
+        x="dia",
+        y=[coluna_tempo, "horas_meta"],
+        title="Comparação de Tempo Gasto e Meta Diária",
+        labels={"dia": "Dia", "value": "Horas", "variable": "Métrica"},
+    )
+    fig.update_traces(mode="lines+markers")
+
+    return fig
