@@ -296,7 +296,7 @@ def tarefa_mais_trabalhada(df):
     formatted_time = f"{hours:02d}:{minutes:02d}"
 
     # Retornar o texto formatado
-    return f"#### Até agora, a tarefa que você mais trabalhou direto foi: \n##### *{task} - {cliente}*\n\n#### O tempo que você ficou trabalhando nisso foi\n ###### **{formatted_time} Horas/Minutos**\n\n#### Essa é a descrição da tarefa:\n\n*{name}*"
+    return f"#### Até agora, a tarefa que você mais trabalhou direto foi: \n##### *{task} - {cliente}*\n\n#### O tempo que você ficou trabalhando nisso foi\n ###### **{formatted_time} Horas/Minutos**\n\n#### Essa é a descrição da tarefa:\n\n{name}"
 
 
 def atualizar_e_salvar_excel(df, initial_date, end_date, nome_arquivo='dados_atualizados.xlsx'):

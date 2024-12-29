@@ -12,12 +12,11 @@ from dateutil import parser  # Usaremos parser para lidar com strings de data/ho
 import ssl
 from xmlrpc import client
 
-
-dotenv.load_dotenv()
-EMAIL_ODOO = os.getenv('EMAIL_ODOO')
-API_KEY_ODOO = os.getenv('API_KEY_ODOO')
-if EMAIL_ODOO == 'SEU_EMAIL_NO_ODOO' or API_KEY_ODOO == 'SUA_CHAVE_DE_API':
-    st.warning('VOCÊ NÃO CONFIGUROU O ARQUIVO .ENV...')
+try:
+    dotenv.load_dotenv()
+    LOCALHOST = os.getenv('LOCALHOST', '')
+except:
+    LOCALHOST = ''
 
 SALARIO_JUNIOR = st.secrets.odoo.salario_junior
 SALARIO_PLENO = st.secrets.odoo.salario_pleno
@@ -48,11 +47,13 @@ elif meta == '100':
 elif meta == '120':
     salario_bruto = col2.number_input('Seu salário bruto', value=float(SALARIO_SENIOR), min_value=0.0, step=0.01, format="%.2f")
 executar = col1.button('Veja a sua meta!')
-apagar_minhas_horas = col2.button('Apagar planilha de histórico!', type="primary")
-if apagar_minhas_horas:
-    try:
-        os.remove('minhas_horas_totais.xlsx')
-    except:pass
+
+if LOCALHOST:
+    apagar_minhas_horas = col2.button('Apagar planilha de histórico!', type="primary")
+    if apagar_minhas_horas:
+        try:
+            os.remove('minhas_horas_totais.xlsx')
+        except:pass
 
 if executar and usuario_rpc:
     URL_RPC = st.secrets.odoo.url_rpc
@@ -118,10 +119,13 @@ if executar and usuario_rpc:
         df_base['x_honorarios'].append(x_honorarios)
         
     df = pd.DataFrame.from_dict(df_base)
+    # st.table(df)
     if df.empty:
-        print('O df está vazio')
-    # else:
-    #     df = atualizar_e_salvar_excel_robusto(df, initial_date, end_date, nome_arquivo='minhas_horas_totais.xlsx')
+        st.warning(f'O Não há lançamentos para análise no mês selecionado...\nA data inicial escolhida foi: {initial_date.strftime("%d/%m/%Y")}\nA data final escolhida foi: {end_date.strftime("%d/%m/%Y")}')
+        st.stop()
+    else:
+        if LOCALHOST:
+            df = atualizar_e_salvar_excel_robusto(df, initial_date, end_date, nome_arquivo='minhas_horas_totais.xlsx')
 
 
     total_de_horas = soma_todas_as_horas(df)
@@ -153,13 +157,18 @@ if executar and usuario_rpc:
     col1.plotly_chart(grafico_tempo_gasto_por_dia(df))
     col2.plotly_chart(grafico_tempo_gasto_por_dia_hora_extra(df_horas_extras))
     st.plotly_chart(grafico_tempo_vs_meta(df, meta=int(meta)))
+    st.plotly_chart(plot_bubble_hours(df))
     texto = concatenar_colunas_em_string(df)
     texto = re.sub(r' irá | foi | nao | um | ele | não | para | 0 | na | se | o | em | ou | que | e | quando | por | para | de | da | ao | pela | x | uma', ' ', texto, flags=re.IGNORECASE)
-    gerar_nuvem_de_palavras(texto, background_color='black', width=550, height=550, scale=15, max_font_size=50)
+    st.markdown('### Nuvem de Palavras de todas as descrições das tarefas')
+    col1_temp, col2_temp, col3_temp = st.columns([1, 2, 1]) 
+    with col2_temp:
+        gerar_nuvem_de_palavras(texto, background_color='black', width=1050, height=550, scale=15, max_font_size=50)
     # st.table(df_horas_extras)
     
-    # with st.expander('$?'):
-    #     honorarios = calcular_honorarios_total(df, initial_date, end_date)
-    #     st.write(f"Quanto você colocou na empresa 💰: {honorarios}")
-
+    if LOCALHOST:
+        with st.expander('Quanto colocou na empresa?'):
+            honorarios = calcular_honorarios_total(df, initial_date, end_date)
+            st.write(f"Quanto você colocou na empresa 💰: {honorarios}")
+    
     # st.dataframe(df)

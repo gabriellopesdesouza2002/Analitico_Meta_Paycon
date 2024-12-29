@@ -397,9 +397,64 @@ def grafico_tempo_vs_meta(df, coluna_data="x_start_datetime", coluna_tempo="unit
         df_resumo,
         x="dia",
         y=[coluna_tempo, "horas_meta"],
-        title="Comparação de Tempo Gasto e Meta Diária",
+        title="Comparação de Tempo Gasto e Meta Diária (Abaixo da linha, está fora de bater a meta)",
         labels={"dia": "Dia", "value": "Horas", "variable": "Métrica"},
     )
     fig.update_traces(mode="lines+markers")
+
+    return fig
+
+
+def plot_bubble_hours(df):
+    # Converte a coluna de data/hora para datetime
+    df["datetime"] = pd.to_datetime(df["x_start_datetime"], errors="coerce")
+
+    # Extrai o dia da semana e mês em português
+    # Ex.: segunda-feira, terça-feira etc.
+    df["dia_semana"] = df["datetime"].dt.day_name(locale="pt_BR")
+    # Ex.: jan, fev, mar etc.
+    df["mes"] = df["datetime"].dt.month_name(locale="pt_BR").str.slice(0,3).str.lower()
+
+    # Mapeia os dias da semana para a ordem desejada (segunda a domingo)
+    ordem_dias = [
+        "segunda-feira", "terça-feira", "quarta-feira", 
+        "quinta-feira", "sexta-feira", "sábado", "domingo"
+    ]
+    # Se o `day_name(locale="pt_BR")` retornar tudo em minúsculo,
+    # ajuste a coluna para minúsculo antes de criar a Categorical
+    df["dia_semana"] = df["dia_semana"].str.lower()
+    df["dia_semana"] = pd.Categorical(df["dia_semana"], categories=ordem_dias, ordered=True)
+
+    # Mapeia os meses para a forma "jan.", "fev.", etc. e define ordem
+    mes_map = {
+        "jan": "jan.", "fev": "fev.", "mar": "mar.", "abr": "abr.",
+        "mai": "mai.", "jun": "jun.", "jul": "jul.", "ago": "ago.",
+        "set": "set.", "out": "out.", "nov": "nov.", "dez": "dez."
+    }
+    ordem_meses = ["jan.", "fev.", "mar.", "abr.", "mai.", "jun.", 
+                   "jul.", "ago.", "set.", "out.", "nov.", "dez."]
+    
+    df["mes"] = df["mes"].map(mes_map)
+    df["mes"] = pd.Categorical(df["mes"], categories=ordem_meses, ordered=True)
+
+    # Soma as horas (unit_amount) por Mês e Dia da Semana
+    grouped = df.groupby(["mes", "dia_semana"], as_index=False)["unit_amount"].sum()
+
+    # Cria o gráfico de bolhas
+    # - x = dia da semana (segunda → domingo, da esquerda pra direita)
+    # - y = mês (jan. → dez., de cima pra baixo ou vice-versa)
+    fig = px.scatter(
+        grouped,
+        x="dia_semana",
+        y="mes",
+        size="unit_amount",
+        color="unit_amount",
+        color_continuous_scale="Reds",
+        size_max=50,
+        title="Frequência de Horas por Mês e Dia da Semana"
+    )
+
+    # Inverte a ordem do eixo Y se quiser janeiro no topo e dezembro embaixo
+    fig.update_yaxes(autorange="reversed")
 
     return fig
