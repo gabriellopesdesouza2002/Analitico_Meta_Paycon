@@ -397,7 +397,7 @@ def grafico_tempo_vs_meta(df, coluna_data="x_start_datetime", coluna_tempo="unit
         df_resumo,
         x="dia",
         y=[coluna_tempo, "horas_meta"],
-        title="Comparação de Tempo Gasto e Meta Diária (Abaixo da linha, está fora de bater a meta)",
+        title="Comparação de Tempo Gasto e Meta Diária (Abaixo da linha, está fora de bater a meta do dia)",
         labels={"dia": "Dia", "value": "Horas", "variable": "Métrica"},
     )
     fig.update_traces(mode="lines+markers")
@@ -456,7 +456,7 @@ def plot_bubble_hours(df):
         color="unit_amount",
         color_continuous_scale="Reds",
         size_max=50,
-        title="Frequência de Horas por Mês (Seg a Sex)"
+        title="Frequência de Horas por Mês (Quais dias da semana que você está mais engajado)"
     )
 
     # Inverte a ordem do eixo Y se quiser do jan para baixo até dez
