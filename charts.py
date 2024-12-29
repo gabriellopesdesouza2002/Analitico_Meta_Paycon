@@ -406,7 +406,6 @@ def grafico_tempo_vs_meta(df, coluna_data="x_start_datetime", coluna_tempo="unit
 
 
 def plot_bubble_hours(df):
-    # Converte a coluna de data/hora para datetime
     df["datetime"] = pd.to_datetime(df["x_start_datetime"], errors="coerce")
 
     # Extrai o dia da semana e mês em português
