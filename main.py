@@ -140,7 +140,7 @@ if executar and usuario_rpc:
     col2.markdown(f"##### Mês da análise selecionada: **{date_analisys_meta}**")
     col2.markdown(f"##### Dias úteis necessários para bater a meta 🗓️: **{dias_uteis}**")
     col2.markdown(f"##### Distribuição de horas por dia útil para bater a meta: **{distribuicao_horas_formatada}**")
-    col2.markdown(f"##### Falta {sum(distribuicao_horas)} horas para bater sua meta")
+    col2.markdown(f"##### Falta {round(sum(distribuicao_horas))} horas para bater sua meta")
     
     # col2.markdown(f"##### A média de horas por dia para você bater a meta é: **{round(total_de_horas / dias_uteis, 2)}**")
     col2.markdown(f"##### Total de horas faturaveis até agora 🕑: **{total_de_horas}**")
