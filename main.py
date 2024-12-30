@@ -158,7 +158,7 @@ if executar and usuario_rpc:
     df_horas_extras = filtrar_fora_horario_comercial(df)
     col1.plotly_chart(grafico_tempo_gasto_por_dia(df))
     col2.plotly_chart(grafico_tempo_gasto_por_dia_hora_extra(df_horas_extras))
-    st.plotly_chart(grafico_tempo_vs_meta(df, meta=int(meta)))
+    col2.plotly_chart(grafico_tempo_vs_meta(df, meta=int(meta)))
     st.plotly_chart(plot_bubble_hours(df))
     texto = concatenar_colunas_em_string(df)
     texto = re.sub(r' irá | foi | nao | um | ele | não | para | 0 | na | se | o | em | ou | que | e | quando | por | para | de | da | ao | pela | x | uma', ' ', texto, flags=re.IGNORECASE)
