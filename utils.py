@@ -539,3 +539,63 @@ def filtrar_fora_horario_comercial(df, coluna_inicio='x_start_datetime', coluna_
     ]
 
     return fora_horario
+
+
+def soma_horas_9_18(df):
+    # 1) Converter colunas para datetime
+    df['x_start_datetime'] = pd.to_datetime(df['x_start_datetime'])
+    df['x_end_datetime']   = pd.to_datetime(df['x_end_datetime'])
+
+    # 2) Filtrar as linhas que começam às 9h (ou depois) e terminam às 18h (ou antes)
+    df_filtrado = df[
+        (df['x_start_datetime'].dt.hour >= 9) &
+        (df['x_end_datetime'].dt.hour <= 18)
+    ].copy()
+
+    # 3) Somar as horas (x_end_datetime - x_start_datetime)
+    total_horas_dec = 0.0
+    for _, row in df_filtrado.iterrows():
+        delta = row['x_end_datetime'] - row['x_start_datetime']
+        total_horas_dec += delta.total_seconds() / 3600.0  # converte para horas decimais
+
+    # 4) Converter horas decimais para string "HH:MM"
+    horas_inteiras = int(total_horas_dec)  # ex.: 146
+    minutos = int(round((total_horas_dec - horas_inteiras) * 60))  # ex.: 0.9 * 60 = 54
+
+    # Montar a string no formato "HH:MM" 
+    # (sem zero à esquerda para horas muito grandes, mas minutos em 2 dígitos)
+    resultado = f"{horas_inteiras}:{minutos:02d}"
+
+    return resultado
+
+
+def calcular_horas_comissao(meta, horas_uteis_str):
+    """
+    Calcula quantas horas acima (ou abaixo) da meta há, com base nas horas úteis.
+    
+    Args:
+        meta (int|float): Meta de horas.
+        horas_uteis_str (str): Total de horas úteis em formato "HH:MM".
+        
+    Returns:
+        str: Diferença no formato "HH:MM" ou "-HH:MM".
+    """
+    # 1) Separar HH:MM
+    hh, mm = horas_uteis_str.split(":")
+    
+    # 2) Converter para decimal
+    horas_uteis_decimal = float(hh) + float(mm)/60.0
+
+    # 3) Subtrair a meta
+    diferenca_decimal = horas_uteis_decimal - meta
+
+    # 4) Transformar a diferença em string "HH:MM"
+    horas_abs = int(abs(diferenca_decimal))
+    minutos_abs = int(round((abs(diferenca_decimal) - horas_abs) * 60))
+    resultado = f"{horas_abs:02d}:{minutos_abs:02d}"
+
+    # 5) Se negativo, prefixar "-"
+    if diferenca_decimal < 0:
+        resultado = f"-{resultado}"
+
+    return resultado

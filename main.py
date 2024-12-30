@@ -40,12 +40,12 @@ if not usuario_rpc:
 meta = col2.radio('Qual a sua meta?', ('80', '100', '120'), index=2)
 initial_date = col1.date_input('Data inicial', value=data_inicial, format='DD/MM/YYYY')
 end_date = col1.date_input('Data final', value=data_final, format='DD/MM/YYYY')
-if meta == '80':
-    salario_bruto = col2.number_input('Seu salário bruto', value=float(SALARIO_JUNIOR), min_value=0.0, step=0.01, format="%.2f")
-elif meta == '100':
-    salario_bruto = col2.number_input('Seu salário bruto', value=float(SALARIO_PLENO), min_value=0.0, step=0.01, format="%.2f")
-elif meta == '120':
-    salario_bruto = col2.number_input('Seu salário bruto', value=float(SALARIO_SENIOR), min_value=0.0, step=0.01, format="%.2f")
+# if meta == '80':
+#     salario_bruto = col2.number_input('Seu salário bruto', value=float(SALARIO_JUNIOR), min_value=0.0, step=0.01, format="%.2f")
+# elif meta == '100':
+#     salario_bruto = col2.number_input('Seu salário bruto', value=float(SALARIO_PLENO), min_value=0.0, step=0.01, format="%.2f")
+# elif meta == '120':
+#     salario_bruto = col2.number_input('Seu salário bruto', value=float(SALARIO_SENIOR), min_value=0.0, step=0.01, format="%.2f")
 executar = col1.button('Veja a sua meta!')
 
 if LOCALHOST:
@@ -140,16 +140,15 @@ if executar and usuario_rpc:
     col2.markdown(f"##### Mês da análise selecionada: **{date_analisys_meta}**")
     col2.markdown(f"##### Dias úteis necessários para bater a meta 🗓️: **{dias_uteis}**")
     col2.markdown(f"##### Distribuição de horas por dia útil para bater a meta: **{distribuicao_horas_formatada}**")
-    col2.markdown(f"##### Falta {round(sum(distribuicao_horas))} horas para bater sua meta")
-    
-    # col2.markdown(f"##### A média de horas por dia para você bater a meta é: **{round(total_de_horas / dias_uteis, 2)}**")
+    col2.markdown(f"##### Falta {round(sum(distribuicao_horas))} horas para bater sua meta")    
     col2.markdown(f"##### Total de horas faturaveis até agora 🕑: **{total_de_horas}**")
-    col2.markdown(f"##### Horas que entrarão como comissão 💰: **{calcular_diferenca_horas(int(meta), total_de_horas)}**")
-    col2.markdown('----')
-    col2.markdown(f"##### Salário líquido com descontos de 15,52% (INSS e IR) 🤑: **{calcular_salario_liquido(salario_bruto)}**")
-    col2.markdown(f"##### Comissão liquida com descontos de 15,52% (INSS e IR) 🤑: **{calcular_diferenca(calcular_diferenca_horas(int(meta), total_de_horas), salario_bruto)}**")
-    col2.markdown(f"##### Salário com comissão líquido com descontos de 15,52% (INSS e IR) 🤑: **{calcular_salario(calcular_diferenca_horas(int(meta), total_de_horas), salario_bruto)}**")
-    col2.markdown('----')
+    col2.markdown(f"##### Horas feitas das 09h a 18h (comercial): **{soma_horas_9_18(df)}**")
+    col2.markdown(f"##### Horas que entrarão como comissão (das quais são úteis das 09h a 18h) 💰: **{calcular_horas_comissao(int(meta), soma_horas_9_18(df))}**")
+    # col2.markdown('----')
+    # col2.markdown(f"##### Salário líquido com descontos de 15,52% (INSS e IR) 🤑: **{calcular_salario_liquido(salario_bruto)}**")
+    # col2.markdown(f"##### Comissão liquida com descontos de 15,52% (INSS e IR) 🤑: **{calcular_diferenca(calcular_diferenca_horas(int(meta), total_de_horas), salario_bruto)}**")
+    # col2.markdown(f"##### Salário com comissão líquido com descontos de 15,52% (INSS e IR) 🤑: **{calcular_salario(calcular_diferenca_horas(int(meta), total_de_horas), salario_bruto)}**")
+    # col2.markdown('----')
 
     # st.success('Alguns analíticos...')
     col1.plotly_chart(criar_grafico_pizza_task(df, 'task'))
