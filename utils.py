@@ -617,7 +617,9 @@ def limpar_texto(texto: str) -> str:
     lista_remocao = [
         "que", "e", "quando", "dos", "não", "nao", "é", "pelo", "pela", 
         "para", "já", "irá", "ira", "foi", "um", "ele", "0", "na", "se", 
-        "o", "em", "ou", "por", "de", "da", "ao", "x", "uma", 'os'
+        "o", "em", "ou", "por", "de", "da", "ao", "x", "uma", 'os', 'das',
+        'as', 'nos', 'nas', 'me', 'meu', 'minha', 'minhas', 'ele', 'ela', 'ele', 'ela',
+        'até'
     ]
 
     # Monta o padrão Regex usando \b para corresponder à palavra inteira:
