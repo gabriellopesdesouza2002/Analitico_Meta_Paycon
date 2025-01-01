@@ -37,16 +37,16 @@ api_key_odoo = col1.text_input('Sua API Key do Odoo', type="password")
 usuario_rpc = col1.text_input('Seu nome', type="default")
 if not usuario_rpc:
     col1.warning('Você não colocou seu nome...')
+initial_date = col2.date_input('Data inicial', value=data_inicial, format='DD/MM/YYYY')
+end_date = col2.date_input('Data final', value=data_final, format='DD/MM/YYYY')
 meta = col2.radio('Qual a sua meta?', ('80', '100', '120'), index=2)
-initial_date = col1.date_input('Data inicial', value=data_inicial, format='DD/MM/YYYY')
-end_date = col1.date_input('Data final', value=data_final, format='DD/MM/YYYY')
 # if meta == '80':
 #     salario_bruto = col2.number_input('Seu salário bruto', value=float(SALARIO_JUNIOR), min_value=0.0, step=0.01, format="%.2f")
 # elif meta == '100':
 #     salario_bruto = col2.number_input('Seu salário bruto', value=float(SALARIO_PLENO), min_value=0.0, step=0.01, format="%.2f")
 # elif meta == '120':
 #     salario_bruto = col2.number_input('Seu salário bruto', value=float(SALARIO_SENIOR), min_value=0.0, step=0.01, format="%.2f")
-executar = col1.button('Veja a sua meta!')
+executar = col1.button('VEJA A SUA META!', type="primary", help='Clique aqui para ver o seu desempenho na data selecionada')
 
 if LOCALHOST:
     apagar_minhas_horas = col2.button('Apagar planilha de histórico!', type="primary")
@@ -133,17 +133,23 @@ if executar and usuario_rpc:
     distribuicao_horas_formatada = [round(horas, 2) for horas in distribuicao_horas]
     date_analisys_meta = initial_date.strftime('%m/%Y')
 
-    resultado = tarefa_mais_trabalhada(df)
-    col1.markdown(resultado)
     
-    col2.markdown('### Dados Estratégicos')
-    col2.markdown(f"##### Mês da análise selecionada: **{date_analisys_meta}**")
-    col2.markdown(f"##### Dias úteis necessários para bater a meta 🗓️: **{dias_uteis}**")
-    col2.markdown(f"##### Distribuição de horas por dia útil para bater a meta: **{distribuicao_horas_formatada}**")
-    col2.markdown(f"##### Falta {round(sum(distribuicao_horas))} horas para bater sua meta")    
-    col2.markdown(f"##### Total de horas faturaveis até agora 🕑: **{total_de_horas}**")
-    col2.markdown(f"##### Horas feitas das 09h a 18h (comercial): **{soma_horas_9_18(df)}**")
-    col2.markdown(f"##### Horas que entrarão como comissão (das quais são úteis das 09h a 18h) 💰: **{calcular_horas_comissao(int(meta), soma_horas_9_18(df))}**")
+    # col2.markdown(f"##### Dias úteis necessários para bater a meta 🗓️: **{dias_uteis}**")
+    col1_metric, col2_metric, col3_metric, col4_metric, col5_metric = st.columns([1, 1, 1, 1, 1]) 
+    col1_metric.metric('Dias úteis necessários para bater a meta', value=len(distribuicao_horas_formatada), delta=f'{meta} Horas')
+    col2_metric.metric('Horas faltantes para bater a meta', value=round(sum(distribuicao_horas)), delta=f'{meta} Horas')
+    col3_metric.metric('Total de horas faturaveis até agora', value=total_de_horas, delta=f'{meta} Horas')
+    col4_metric.metric('Horas feitas das 09h a 18h (comercial, o que é considerado para iniciar a receber comissões)', value=soma_horas_9_18(df), delta=f'{meta} Horas')
+    col5_metric.metric('Horas que entrarão como comissão (das quais são úteis das 09h a 18h)', value=calcular_horas_comissao(int(meta), soma_horas_9_18(df)))
+
+    st.markdown(f"### Mês da análise selecionada: **{date_analisys_meta}**")
+    st.markdown(f"### Distribuição de horas por dia útil para bater a meta: **{distribuicao_horas_formatada}**")
+
+    st.markdown(f"---")
+    resultado = tarefa_mais_trabalhada(df)
+    st.markdown(resultado)
+    st.markdown(f"---")
+
     # col2.markdown('----')
     # col2.markdown(f"##### Salário líquido com descontos de 15,52% (INSS e IR) 🤑: **{calcular_salario_liquido(salario_bruto)}**")
     # col2.markdown(f"##### Comissão liquida com descontos de 15,52% (INSS e IR) 🤑: **{calcular_diferenca(calcular_diferenca_horas(int(meta), total_de_horas), salario_bruto)}**")
