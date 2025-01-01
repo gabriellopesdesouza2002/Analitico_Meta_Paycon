@@ -127,6 +127,7 @@ if executar and usuario_rpc:
         if LOCALHOST:
             df = atualizar_e_salvar_excel_robusto(df, initial_date, end_date, nome_arquivo='minhas_horas_totais.xlsx')
 
+    st.balloons()
 
     total_de_horas = soma_todas_as_horas(df)
     dias_uteis, distribuicao_horas = calcular_horas_restantes(df, int(meta))
