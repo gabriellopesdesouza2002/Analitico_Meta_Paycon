@@ -468,18 +468,19 @@ def calcular_diferenca(horas_extras, salario_bruto, comissao=0):
 
 
 
-def concatenar_colunas_em_string(df):
+def concatenar_coluna_name_em_string(df):
     """
-    Concatena todas as colunas de um DataFrame em uma única string, separando os valores por espaço.
+    Concatena todas as linhas da coluna "name" de um DataFrame em uma única string, 
+    separando os valores por espaço.
 
     Parâmetros:
         df (pd.DataFrame): O DataFrame de entrada.
 
     Retorna:
-        str: Uma única string contendo os valores concatenados das colunas.
+        str: Uma única string contendo os valores concatenados da coluna "name".
     """
-    # Converte todas as colunas para strings e concatena com espaço
-    resultado = df.astype(str).agg(' '.join, axis=1).str.cat(sep=' ')
+    # Converte a coluna "name" para string e concatena com espaço
+    resultado = df["name"].astype(str).str.cat(sep=' ')
     return resultado
 
 
@@ -599,3 +600,33 @@ def calcular_horas_comissao(meta, horas_uteis_str):
         resultado = f"-{resultado}"
 
     return resultado
+
+
+def limpar_texto(texto: str) -> str:
+    """
+    Remove palavras específicas (ex.: stopwords) de um texto usando Regex com fronteira de palavra 
+    e normaliza espaços em branco.
+
+    Parâmetros:
+        texto (str): O texto de entrada.
+
+    Retorna:
+        str: O texto limpo, sem as palavras indesejadas e com espaços normalizados.
+    """
+    # Lista de palavras que você deseja remover integralmente:
+    lista_remocao = [
+        "que", "e", "quando", "dos", "não", "nao", "é", "pelo", "pela", 
+        "para", "já", "irá", "ira", "foi", "um", "ele", "0", "na", "se", 
+        "o", "em", "ou", "por", "de", "da", "ao", "x", "uma", 'os'
+    ]
+
+    # Monta o padrão Regex usando \b para corresponder à palavra inteira:
+    padrao = r"\b(" + "|".join(lista_remocao) + r")\b"
+
+    # Converte todo o texto para minúsculas e aplica a substituição:
+    texto_limpo = re.sub(padrao, " ", texto.lower(), flags=re.IGNORECASE|re.DOTALL)
+
+    # Remove espaços múltiplos e trim (início e fim):
+    texto_limpo = re.sub(r"\s+", " ", texto_limpo).strip()
+
+    return texto_limpo

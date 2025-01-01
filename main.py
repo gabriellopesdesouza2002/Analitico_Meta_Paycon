@@ -151,21 +151,25 @@ if executar and usuario_rpc:
     # col2.markdown('----')
 
     # st.success('Alguns analíticos...')
-    col1.plotly_chart(criar_grafico_pizza_task(df, 'task'))
-    col2.plotly_chart(criar_grafico_pizza(df, 'cliente'))
+    col1_analitic, col2_analitic = st.columns([2, 2]) 
+    df_horas_extras = filtrar_fora_horario_comercial(df)
+    with col1_analitic:
+        st.plotly_chart(criar_grafico_pizza_task(df, 'task'))
+        st.plotly_chart(grafico_tempo_gasto_por_dia_hora_extra(df_horas_extras))
+    with col2_analitic:
+        st.plotly_chart(criar_grafico_pizza(df, 'cliente'))
+        st.plotly_chart(grafico_tempo_vs_meta(df, meta=int(meta)))
+    st.plotly_chart(grafico_tempo_gasto_por_dia(df))
+    st.plotly_chart(plot_bubble_hours(df))
+    # col2.plotly_chart(gerar_grafico_distribuicao_horas(distribuicao_horas_formatada, meta=int(meta)))
     # st.plotly_chart(analisar_horas_extras(df))
     
-    df_horas_extras = filtrar_fora_horario_comercial(df)
-    col1.plotly_chart(grafico_tempo_gasto_por_dia(df))
-    col2.plotly_chart(grafico_tempo_gasto_por_dia_hora_extra(df_horas_extras))
-    col2.plotly_chart(grafico_tempo_vs_meta(df, meta=int(meta)))
-    st.plotly_chart(plot_bubble_hours(df))
-    texto = concatenar_colunas_em_string(df)
-    texto = re.sub(r' irá | foi | nao | um | ele | não | para | 0 | na | se | o | em | ou | que | e | quando | por | para | de | da | ao | pela | x | uma', ' ', texto, flags=re.IGNORECASE)
+    texto = concatenar_coluna_name_em_string(df)
+    texto = limpar_texto(texto)
     st.markdown('### Nuvem de Palavras de todas as descrições das tarefas')
     col1_temp, col2_temp, col3_temp = st.columns([1, 2, 1]) 
     with col2_temp:
-        gerar_nuvem_de_palavras(texto, background_color='black', width=1050, height=550, scale=15, max_font_size=50)
+        gerar_nuvem_de_palavras(texto, background_color='black', width=1050, height=550, scale=15, max_font_size=100)
     # st.table(df_horas_extras)
     
     if LOCALHOST:

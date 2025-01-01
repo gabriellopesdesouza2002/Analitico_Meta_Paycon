@@ -6,77 +6,96 @@ import plotly.graph_objects as go
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import numpy as np
+import datetime
+import holidays
 
 
-def grafico_tempo_gasto_por_dia(df, coluna_data="x_start_datetime", coluna_tempo="unit_amount"):
+def grafico_tempo_gasto_por_dia(df, 
+                                coluna_data="x_start_datetime", 
+                                coluna_tempo="unit_amount"):
     """
-    Gera um gráfico de linha mostrando o tempo total gasto por dia com base na coluna `unit_amount`.
+    Gera um gráfico de linha mostrando o tempo total gasto por dia,
+    MAS APENAS considerando as tarefas cujo horário de início está 
+    entre 9h e 18h (sem tratar partes de tarefas que comecem antes ou terminem depois).
 
     Args:
         df (pd.DataFrame): O DataFrame contendo os dados.
-        coluna_data (str): Nome da coluna com as datas.
+        coluna_data (str): Nome da coluna com as datas/hora de início.
         coluna_tempo (str): Nome da coluna com o tempo da tarefa (unit_amount).
 
     Returns:
-        None: Exibe o gráfico diretamente no Streamlit.
+        plotly.graph_objs._figure.Figure: Figura do Plotly com o gráfico de linha.
     """
-    # Converter a coluna de datas para datetime
+    # Converte a coluna de datas para datetime
     df[coluna_data] = pd.to_datetime(df[coluna_data])
+    
+    # Extrai somente a hora em outra coluna para facilitar o filtro
+    df["hora_inicio"] = df[coluna_data].dt.hour
+
+    # Filtrar apenas registros que iniciaram entre 9:00 e 17:59
+    df_filtrado = df[(df["hora_inicio"] >= 9) & (df["hora_inicio"] < 18)]
 
     # Criar uma coluna com apenas as datas (sem o horário)
-    df["dia"] = df[coluna_data].dt.date
+    df_filtrado["dia"] = df_filtrado[coluna_data].dt.date
 
-    # Agrupar por dia e somar o tempo das tarefas
-    df_resumo = df.groupby("dia")[coluna_tempo].sum().reset_index()
+    # Agrupar por dia e somar o tempo (unit_amount)
+    df_resumo = df_filtrado.groupby("dia")[coluna_tempo].sum().reset_index()
 
     # Criar o gráfico de linha
     fig = px.line(
         df_resumo, 
         x="dia", 
         y=coluna_tempo, 
-        title="Tempo Gasto por Dia (Tempo que executou as tarefas por dia)",
+        title="Tempo Gasto por Dia (Somente Inícios entre 9h e 18h)",
         labels={"dia": "Dia", coluna_tempo: "Tempo Gasto (Horas)"}
     )
     fig.update_traces(mode="lines+markers")
 
-    # Exibir o gráfico no Streamlit
     return fig
     
 
-def grafico_tempo_gasto_por_dia_hora_extra(df, coluna_data="x_start_datetime", coluna_tempo="unit_amount"):
+def grafico_tempo_gasto_por_dia_hora_extra(df, coluna_data_inicio="x_start_datetime", coluna_data_fim="x_end_datetime", coluna_tempo="unit_amount"):
     """
-    Gera um gráfico de linha mostrando o tempo total gasto por dia com base na coluna `unit_amount`.
+    Gera um gráfico de linha mostrando o tempo total gasto por dia considerando apenas horas extras
+    (antes das 9h ou após as 18h).
 
     Args:
         df (pd.DataFrame): O DataFrame contendo os dados.
-        coluna_data (str): Nome da coluna com as datas.
+        coluna_data_inicio (str): Nome da coluna com as datas de início.
+        coluna_data_fim (str): Nome da coluna com as datas de término.
         coluna_tempo (str): Nome da coluna com o tempo da tarefa (unit_amount).
 
     Returns:
-        None: Exibe o gráfico diretamente no Streamlit.
+        plotly.graph_objects.Figure: Gráfico de linha com as horas extras por dia.
     """
-    # Converter a coluna de datas para datetime
-    df[coluna_data] = pd.to_datetime(df[coluna_data])
+    # Converter as colunas de datas para datetime
+    df[coluna_data_inicio] = pd.to_datetime(df[coluna_data_inicio])
+    df[coluna_data_fim] = pd.to_datetime(df[coluna_data_fim])
+
+    # Filtrar registros antes das 9h ou após as 18h
+    filtro_hora_extra = (
+        (df[coluna_data_inicio].dt.time < datetime.time(9, 0)) | 
+        (df[coluna_data_fim].dt.time > datetime.time(18, 0))
+    )
+    df_horas_extras = df[filtro_hora_extra]
 
     # Criar uma coluna com apenas as datas (sem o horário)
-    df["dia"] = df[coluna_data].dt.date
+    df_horas_extras["dia"] = df_horas_extras[coluna_data_inicio].dt.date
 
     # Agrupar por dia e somar o tempo das tarefas
-    df_resumo = df.groupby("dia")[coluna_tempo].sum().reset_index()
+    df_resumo = df_horas_extras.groupby("dia")[coluna_tempo].sum().reset_index()
 
     # Criar o gráfico de linha
     fig = px.line(
         df_resumo, 
         x="dia", 
         y=coluna_tempo, 
-        title="Tempo Gasto por Dia (Tempo que trabalhou até mais tarde [H/Extra])",
+        title="Tempo Gasto por Dia (Horas Extras)",
         labels={"dia": "Dia", coluna_tempo: "Tempo Gasto (Horas)"}
     )
     fig.update_traces(mode="lines+markers")
 
-    # Exibir o gráfico no Streamlit
     return fig
-
 def grafico_horas_extras(df, coluna_inicio="x_start_datetime", coluna_fim="x_end_datetime"):
     """
     Gera um gráfico de linha com os dias e as horas extras calculadas.
@@ -461,5 +480,59 @@ def plot_bubble_hours(df):
 
     # Inverte a ordem do eixo Y se quiser do jan para baixo até dez
     fig.update_yaxes(autorange="reversed")
+
+    return fig
+
+
+def gerar_grafico_distribuicao_horas(lista_horas, meta=120):
+    """
+    Gera um gráfico de barras com a distribuição das horas por dia útil para atingir a meta.
+    
+    Parâmetros:
+    - lista_horas (list): Lista de horas já registradas.
+    - meta (int): Meta de horas desejada.
+    
+    Retorna:
+    - fig (plotly.graph_objects.Figure): Gráfico de barras com a distribuição.
+    """
+    # Total de horas já registradas
+    total_hours = sum(lista_horas)
+    horas_restantes = max(0, meta - total_hours)
+
+    # Configuração dos feriados no Brasil
+    brasil_holidays = holidays.Brazil()
+
+    # Data de hoje
+    hoje = datetime.date.today()
+
+    # Lista de dias úteis futuros, distribuição de horas e datas
+    distribuicao_horas = []
+    datas = []
+
+    while horas_restantes > 0:
+        # Incrementa o dia
+        hoje += datetime.timedelta(days=1)
+
+        # Verifica se é dia útil
+        if hoje.weekday() < 5 and hoje not in brasil_holidays:
+            horas_do_dia = min(8, horas_restantes)  # Aloca no máximo 8 horas por dia
+            distribuicao_horas.append(horas_do_dia)
+            datas.append(hoje)
+            horas_restantes -= horas_do_dia
+
+    # Criação do gráfico com Plotly
+    fig = go.Figure(
+        data=go.Bar(
+            x=[data.strftime("%d/%m/%Y") for data in datas],
+            y=distribuicao_horas,
+            marker=dict(color="blue"),
+        )
+    )
+    fig.update_layout(
+        title="Distribuição de Horas por Dia Útil para Atingir a Meta",
+        xaxis_title="Datas (Dias Úteis)",
+        yaxis_title="Horas",
+        template="plotly_dark",
+    )
 
     return fig
