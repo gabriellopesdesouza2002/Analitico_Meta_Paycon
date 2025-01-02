@@ -90,7 +90,7 @@ def grafico_tempo_gasto_por_dia_hora_extra(df, coluna_data_inicio="x_start_datet
         df_resumo, 
         x="dia", 
         y=coluna_tempo, 
-        title="Tempo Gasto por Dia (Horas Extras)",
+        title="Tempo Gasto por Dia (Fora das 9h e 18h)",
         labels={"dia": "Dia", coluna_tempo: "Tempo Gasto (Horas)"}
     )
     fig.update_traces(mode="lines+markers")
@@ -182,7 +182,11 @@ def gerar_nuvem_de_palavras(texto, max_words=100, background_color="#ffffff", wi
         width=width,
         height=height,
         scale=scale,
-        max_font_size=max_font_size
+        max_font_size=max_font_size,
+        # Desliga a identificação de bigramas/trigramas automáticos
+        collocations=False,
+        # Define uma expressão regular que considera hífens como parte da palavra
+        regexp=r"[a-zA-ZÀ-ÖÙ-öù-ÿ'\-]+"
     ).generate(texto)
 
     # Plotando a nuvem de palavras
