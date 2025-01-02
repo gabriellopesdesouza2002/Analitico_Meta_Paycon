@@ -34,18 +34,16 @@ data_final = ultimo_dia_util_mes(hoje)
 col1, col2 = st.columns(2)
 email_odoo = col1.text_input('Seu email do Odoo', type="default")
 api_key_odoo = col1.text_input('Sua API Key do Odoo', type="password")
-usuario_rpc = col1.text_input('Seu nome', type="default")
-if not usuario_rpc:
-    col1.warning('Você não colocou seu nome...')
+e_admin = col1.checkbox('Sou Admin no sistema', value=False)
+if e_admin:
+    usuario_rpc = col1.text_input('Seu nome', type="default")
+    if not usuario_rpc:
+        col1.warning('Você não colocou o nome da pessoa...')
+else:
+    usuario_rpc = ''
 initial_date = col2.date_input('Data inicial', value=data_inicial, format='DD/MM/YYYY')
 end_date = col2.date_input('Data final', value=data_final, format='DD/MM/YYYY')
 meta = col2.radio('Qual a sua meta?', ('80', '100', '120'), index=2)
-# if meta == '80':
-#     salario_bruto = col2.number_input('Seu salário bruto', value=float(SALARIO_JUNIOR), min_value=0.0, step=0.01, format="%.2f")
-# elif meta == '100':
-#     salario_bruto = col2.number_input('Seu salário bruto', value=float(SALARIO_PLENO), min_value=0.0, step=0.01, format="%.2f")
-# elif meta == '120':
-#     salario_bruto = col2.number_input('Seu salário bruto', value=float(SALARIO_SENIOR), min_value=0.0, step=0.01, format="%.2f")
 executar = col1.button('VEJA A SUA META!', type="primary", help='Clique aqui para ver o seu desempenho na data selecionada')
 
 if LOCALHOST:
@@ -55,7 +53,7 @@ if LOCALHOST:
             os.remove('minhas_horas_totais.xlsx')
         except:pass
 
-if executar and usuario_rpc:
+if executar:
     URL_RPC = st.secrets.odoo.url_rpc
     DB_RPC = st.secrets.odoo.db_rpc
     USERNAME_RPC = email_odoo.strip()

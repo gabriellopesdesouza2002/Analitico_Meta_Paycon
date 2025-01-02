@@ -136,9 +136,15 @@ def get_odoo(model: str, data: dict, auth: dict, filters: list = [], uid: int = 
 
 
 def soma_todas_as_horas(df):
-    total_hours = df["unit_amount"].sum()
-    hours = int(total_hours)
-    minutes = int((total_hours - hours) * 60)
+    total_hours = df["unit_amount"].sum()  # Soma decimal (e.g., 7.996)
+    
+    # Convertemos para minutos e ARREDONDAMOS
+    total_minutos = int(round(total_hours * 60))  # ~ 480 => 8:00
+    
+    # Quebramos de volta em horas e minutos
+    hours = total_minutos // 60
+    minutes = total_minutos % 60
+    
     formatted_time = f"{hours:02d}:{minutes:02d}"
     return formatted_time
 
@@ -184,7 +190,7 @@ def calcular_horas_restantes(df, total_desejado=120):
     import datetime
 
     # Total de horas já calculadas
-    total_hours = df["unit_amount"].sum()
+    total_hours = round(df["unit_amount"].sum())
     
     # Definir o total desejado
     horas_restantes = total_desejado - total_hours
@@ -543,30 +549,36 @@ def filtrar_fora_horario_comercial(df, coluna_inicio='x_start_datetime', coluna_
 
 
 def soma_horas_9_18(df):
-    # 1) Converter colunas para datetime
+    # 1) Converter colunas para datetime (se ainda não estiverem)
     df['x_start_datetime'] = pd.to_datetime(df['x_start_datetime'])
     df['x_end_datetime']   = pd.to_datetime(df['x_end_datetime'])
-
-    # 2) Filtrar as linhas que começam às 9h (ou depois) e terminam às 18h (ou antes)
-    df_filtrado = df[
-        (df['x_start_datetime'].dt.hour >= 9) &
-        (df['x_end_datetime'].dt.hour <= 18)
-    ].copy()
-
-    # 3) Somar as horas (x_end_datetime - x_start_datetime)
+    
     total_horas_dec = 0.0
-    for _, row in df_filtrado.iterrows():
-        delta = row['x_end_datetime'] - row['x_start_datetime']
-        total_horas_dec += delta.total_seconds() / 3600.0  # converte para horas decimais
-
-    # 4) Converter horas decimais para string "HH:MM"
-    horas_inteiras = int(total_horas_dec)  # ex.: 146
-    minutos = int(round((total_horas_dec - horas_inteiras) * 60))  # ex.: 0.9 * 60 = 54
-
-    # Montar a string no formato "HH:MM" 
-    # (sem zero à esquerda para horas muito grandes, mas minutos em 2 dígitos)
+    
+    # 2) Percorrer cada linha do dataframe
+    for _, row in df.iterrows():
+        start_real = row['x_start_datetime']
+        end_real   = row['x_end_datetime']
+        
+        # 3) Construir as âncoras de 9h e 18h (mesmo dia do start)
+        start_9h = start_real.replace(hour=9, minute=0, second=0, microsecond=0)
+        end_18h  = start_real.replace(hour=18, minute=0, second=0, microsecond=0)
+        
+        # 4) Calcular o intervalo válido (interseção com [09:00–18:00])
+        inicio_valido = max(start_real, start_9h)
+        fim_valido    = min(end_real,   end_18h)
+        
+        # 5) Se a interseção for positiva, soma esse pedaço
+        if fim_valido > inicio_valido:
+            delta = fim_valido - inicio_valido
+            total_horas_dec += delta.total_seconds() / 3600.0
+    
+    # 6) Converter de decimal para HH:MM sem gerar “7:60”
+    total_minutos = int(round(total_horas_dec * 60))
+    horas_inteiras = total_minutos // 60
+    minutos = total_minutos % 60
+    
     resultado = f"{horas_inteiras}:{minutos:02d}"
-
     return resultado
 
 
