@@ -644,3 +644,28 @@ def limpar_texto(texto: str) -> str:
     texto_limpo = re.sub(r"\s+", " ", texto_limpo).strip()
 
     return texto_limpo
+
+
+def data_para_bater_meta(lista_tarefas, pais='BR', data_inicio=None):
+    # Obtém o país para os feriados
+    feriados = holidays.CountryHoliday(pais)
+    
+    # Define a data de início (hoje, se não for fornecida)
+    if data_inicio is None:
+        data_inicio = datetime.date.today()
+    
+    # Inicializa o contador de dias trabalhados
+    dias_trabalhados = 0
+    data_atual = data_inicio
+    
+    # Enquanto não atingirmos o número de dias necessários
+    while dias_trabalhados < len(lista_tarefas):
+        # Verifica se o dia atual é um dia útil (não é sábado, domingo ou feriado)
+        if data_atual.weekday() < 5 and data_atual not in feriados:
+            dias_trabalhados += 1
+        # Se ainda não atingimos a meta, avança para o próximo dia
+        if dias_trabalhados < len(lista_tarefas):
+            data_atual += datetime.timedelta(days=1)
+    
+    # Retorna a data em que a meta será batida
+    return data_atual

@@ -134,12 +134,15 @@ if executar:
 
     
     # col2.markdown(f"##### Dias úteis necessários para bater a meta 🗓️: **{dias_uteis}**")
-    col1_metric, col2_metric, col3_metric, col4_metric, col5_metric = st.columns([1, 1, 1, 1, 1]) 
+    data_meta = data_para_bater_meta(distribuicao_horas_formatada, pais='BR', data_inicio=datetime.now())
+    dia_bater_meta = data_meta.strftime('%d/%m/%Y')
+    col1_metric, col2_metric, col3_metric, col4_metric, col5_metric, col6_metric = st.columns([1, 1, 1, 1, 1, 1]) 
     col1_metric.metric('Dias úteis necessários para bater a meta', value=len(distribuicao_horas_formatada), delta=f'{meta} Horas')
     col2_metric.metric('Horas faltantes para bater a meta', value=round(sum(distribuicao_horas)), delta=f'{meta} Horas')
     col3_metric.metric('Total de horas faturaveis até agora', value=total_de_horas, delta=f'{meta} Horas')
     col4_metric.metric('Horas feitas das 09h a 18h (considerado para iniciar a receber comissões)', value=soma_horas_9_18(df), delta=f'{meta} Horas')
     col5_metric.metric('Horas que entrarão como comissão (das quais são úteis das 09h a 18h)', value=calcular_horas_comissao(int(meta), soma_horas_9_18(df)))
+    col6_metric.metric('Nesse ritmo, você baterá a meta no dia', value=dia_bater_meta)
 
     st.markdown(f"### Mês da análise selecionada: **{date_analisys_meta}**")
     st.markdown(f"### Distribuição de horas por dia útil para bater a meta: **{distribuicao_horas_formatada}**")
