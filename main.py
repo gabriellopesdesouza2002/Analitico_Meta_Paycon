@@ -106,6 +106,8 @@ if executar:
         task = record['task_id'][1]
         cliente = record['project_id'][1]
         x_honorarios = record['x_honorarios']
+        if 'Paycon - Comissionamento' in cliente:
+            continue
         df_base['id'].append(id)
         df_base['name'].append(name)
         df_base['x_faturavel'].append(x_faturavel)
