@@ -109,6 +109,7 @@ if executar:
         cliente = record['project_id'][1]
         x_honorarios = record['x_honorarios']
         if 'call' in x_tipo_lancamento.lower():
+            continue
             unit_amount = unit_amount / 2
         if 'Paycon - Comissionamento' in cliente:
             continue
