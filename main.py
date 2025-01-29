@@ -93,6 +93,7 @@ if executar:
         "x_start_datetime":[],
         "unit_amount":[],
         "x_honorarios": [],
+        "x_tipo_lancamento": [],
         "name": [],
     }
 
@@ -100,12 +101,15 @@ if executar:
         id = record['id']
         name = record['name']
         x_end_datetime = record['x_end_datetime']
+        x_tipo_lancamento = record['x_tipo_lancamento_id'][-1].lower()
         x_start_datetime = record['x_start_datetime']
         x_faturavel = record['x_faturavel']
         unit_amount = record['unit_amount']
         task = record['task_id'][1]
         cliente = record['project_id'][1]
         x_honorarios = record['x_honorarios']
+        if 'call' in x_tipo_lancamento.lower():
+            unit_amount = unit_amount / 2
         if 'Paycon - Comissionamento' in cliente:
             continue
         df_base['id'].append(id)
@@ -117,6 +121,7 @@ if executar:
         df_base['task'].append(task)
         df_base['cliente'].append(cliente)
         df_base['x_honorarios'].append(x_honorarios)
+        df_base['x_tipo_lancamento'].append(x_tipo_lancamento)
         
     df = pd.DataFrame.from_dict(df_base)
     # st.table(df)
