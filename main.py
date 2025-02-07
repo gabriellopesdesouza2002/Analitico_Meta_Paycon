@@ -44,6 +44,8 @@ else:
 initial_date = col2.date_input('Data inicial', value=data_inicial, format='DD/MM/YYYY')
 end_date = col2.date_input('Data final', value=data_final, format='DD/MM/YYYY')
 meta = col2.radio('Qual a sua meta?', ('80', '100', '120'), index=2)
+calls = col2.checkbox('Considerar Calls?')
+paycon_comissionamento = col2.checkbox('Considerar Paycon - Comissionamento?')
 executar = col1.button('VEJA A SUA META!', type="primary", help='Clique aqui para ver o seu desempenho na data selecionada')
 
 if LOCALHOST:
@@ -108,11 +110,12 @@ if executar:
         task = record['task_id'][1]
         cliente = record['project_id'][1]
         x_honorarios = record['x_honorarios']
-        if 'call' in x_tipo_lancamento.lower():
-            continue
-            unit_amount = unit_amount / 2
-        if 'Paycon - Comissionamento' in cliente:
-            continue
+        if calls == False:
+            if 'call' in x_tipo_lancamento.lower():
+                continue
+        if paycon_comissionamento == False:
+            if 'Paycon - Comissionamento' in cliente:
+                continue
         df_base['id'].append(id)
         df_base['name'].append(name)
         df_base['x_faturavel'].append(x_faturavel)
