@@ -144,7 +144,7 @@ if executar:
     col2_metric.metric('Horas faltantes para bater a meta', value=round(sum(distribuicao_horas)), delta=f'{meta} Horas')
     col3_metric.metric('Total de horas faturaveis até agora', value=total_de_horas, delta=f'{meta} Horas')
     col4_metric.metric('Horas feitas das 09h a 18h (Para receber comissões)', value=soma_horas_9_18(df), delta=f'{meta} Horas')
-    col5_metric.metric('Horas que entrarão como comissão (das quais são úteis das 09h a 18h)', value=calcular_horas_comissao(int(meta), soma_horas_9_18(df)))
+    col5_metric.metric('Horas que entrarão como comissão (apenas úteis das 09h a 18h)', value=calcular_horas_comissao(int(meta), soma_horas_9_18(df)))
     col6_metric.metric('Nesse ritmo, você baterá a meta no dia', value=dia_bater_meta)
 
     st.markdown(f"### Mês da análise selecionada: **{date_analisys_meta}**")
