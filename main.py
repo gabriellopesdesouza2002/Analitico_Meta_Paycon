@@ -85,7 +85,7 @@ if executar:
     end_date_formatted = end_date.strftime('%Y-%m-%d')
     filter_odoo = ["&", "&", ("date", ">=", initial_date_formatted), ("date", "<=", end_date_formatted), ("employee_id", "ilike", usuario_rpc), ("x_faturavel", "=", 'faturavel')]
     records_lines = get_odoo2('account.analytic.line', data, AUTH, filter_odoo)
-    st.markdown(records_lines)
+    # st.markdown(records_lines)
     df_base = {
         "id" : [],
         "cliente" : [],
