@@ -24,7 +24,7 @@ SALARIO_SENIOR = st.secrets.odoo.salario_senior
 
 st.set_page_config(layout="wide")
 st.title('Analítico da Meta Faturável 📊')
-st.caption(f'## Veja como você vai se sair esse em **{datetime.now().strftime("%m/%Y")}**')
+st.caption(f'## Veja como você vai se sair em **{datetime.now().strftime("%m/%Y")}**')
 uid_odoo = None
 
 hoje = datetime.today()
@@ -144,7 +144,7 @@ if executar:
     col1_metric.metric('Dias úteis necessários para bater a meta', value=len(distribuicao_horas_formatada), delta=f'{meta} Horas')
     col2_metric.metric('Horas faltantes para bater a meta', value=round(sum(distribuicao_horas)), delta=f'{meta} Horas')
     col3_metric.metric('Total de horas faturaveis até agora', value=total_de_horas, delta=f'{meta} Horas')
-    col4_metric.metric('Horas feitas das 09h a 18h (considerado para iniciar a receber comissões)', value=soma_horas_9_18(df), delta=f'{meta} Horas')
+    col4_metric.metric('Horas feitas das 09h a 18h (Para receber comissões)', value=soma_horas_9_18(df), delta=f'{meta} Horas')
     col5_metric.metric('Horas que entrarão como comissão (das quais são úteis das 09h a 18h)', value=calcular_horas_comissao(int(meta), soma_horas_9_18(df)))
     col6_metric.metric('Nesse ritmo, você baterá a meta no dia', value=dia_bater_meta)
 
