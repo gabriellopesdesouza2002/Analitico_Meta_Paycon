@@ -44,8 +44,8 @@ else:
 initial_date = col2.date_input('Data inicial', value=data_inicial, format='DD/MM/YYYY')
 end_date = col2.date_input('Data final', value=data_final, format='DD/MM/YYYY')
 meta = col2.radio('Qual a sua meta?', ('80', '100', '120'), index=2)
-calls = col2.checkbox('Considerar Calls?')
-paycon_comissionamento = col2.checkbox('Considerar Paycon - Comissionamento?')
+# calls = col2.checkbox('Considerar Calls?')
+# paycon_comissionamento = col2.checkbox('Considerar Paycon - Comissionamento?')
 executar = col1.button('VEJA A SUA META!', type="primary", help='Clique aqui para ver o seu desempenho na data selecionada')
 
 if LOCALHOST:
@@ -71,21 +71,22 @@ if executar:
 
     data = {'fields': [
         'id',
-        'name',
+        'name', # descricao
         'x_faturavel',
         'x_end_datetime',
         'x_start_datetime',
         'unit_amount',
         'task_id',
         'project_id',
-        'x_tipo_lancamento_id',
         'x_honorarios',
         'employee_id',
         ]}
     initial_date_formatted = initial_date.strftime('%Y-%m-%d')
     end_date_formatted = end_date.strftime('%Y-%m-%d')
     filter_odoo = ["&", "&", ("date", ">=", initial_date_formatted), ("date", "<=", end_date_formatted), ("employee_id", "ilike", usuario_rpc), ("x_faturavel", "=", 'faturavel')]
+    filter_odoo = [("date", ">=", initial_date_formatted), ("date", "<=", end_date_formatted)]
     records_lines = get_odoo2('account.analytic.line', data, AUTH, filter_odoo)
+    # st.markdown(records_lines)
     df_base = {
         "id" : [],
         "cliente" : [],
@@ -95,7 +96,6 @@ if executar:
         "x_start_datetime":[],
         "unit_amount":[],
         "x_honorarios": [],
-        "x_tipo_lancamento": [],
         "name": [],
     }
 
@@ -103,19 +103,13 @@ if executar:
         id = record['id']
         name = record['name']
         x_end_datetime = record['x_end_datetime']
-        x_tipo_lancamento = record['x_tipo_lancamento_id'][-1].lower()
         x_start_datetime = record['x_start_datetime']
         x_faturavel = record['x_faturavel']
         unit_amount = record['unit_amount']
         task = record['task_id'][1]
         cliente = record['project_id'][1]
         x_honorarios = record['x_honorarios']
-        if calls == False:
-            if 'call' in x_tipo_lancamento.lower():
-                continue
-        if paycon_comissionamento == False:
-            if 'Paycon - Comissionamento' in cliente:
-                continue
+
         df_base['id'].append(id)
         df_base['name'].append(name)
         df_base['x_faturavel'].append(x_faturavel)
@@ -125,7 +119,6 @@ if executar:
         df_base['task'].append(task)
         df_base['cliente'].append(cliente)
         df_base['x_honorarios'].append(x_honorarios)
-        df_base['x_tipo_lancamento'].append(x_tipo_lancamento)
         
     df = pd.DataFrame.from_dict(df_base)
     # st.table(df)
